@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=AirsyncDownload Resource
+Comment=Downloads emails from an Exchange Server using the AirSync protocol
+Type=AkonadiResource
+Exec=akonadi_airsyncdownload_resource
+Icon=network-server
+
+X-Akonadi-MimeTypes=message/rfc822
+X-Akonadi-Capabilities=Resource
+X-Akonadi-Identifier=akonadi_airsyncdownload_resource

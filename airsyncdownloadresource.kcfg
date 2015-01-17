@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:kcfg="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+  <kcfgfile/>
+  <group name="General">
+    <entry name="deviceId" type="String"/>
+    <entry name="userAgent" type="String"/>
+    <entry name="server" type="String">
+      <label>The Url to the exchange server.</label>
+    </entry>
+    <entry name="secureHttp" type="Bool">
+      <label>Use secured encrypted communication (https).</label>
+      <default>true</default>
+    </entry>
+    <entry name="domain" type="String">
+      <label>The users windows domain.</label>
+    </entry>
+    <entry name="userName" type="String">
+      <label>The username used for authentication.</label>
+    </entry>
+    <entry name="password" type="Password">
+      <label>The password used for authentication.</label>
+    </entry>
+    <entry name="leaveMailsOnServer" type="Bool">
+      <label>After download leave mails on the server.</label>
+      <default>false</default>
+    </entry>
+     <entry name="intervalCheckEnabled" type="Bool">
+       <default>false</default>
+     </entry>
+     <entry name="intervalCheckInterval" type="Int">
+        <default>5</default>
+     </entry>
+    <entry name="targetCollection" type="LongLong">
+      <default>-1</default>
+     </entry>
+  </group>
+</kcfg>

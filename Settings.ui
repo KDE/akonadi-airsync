@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Settings</class>
+ <widget class="QWidget" name="Settings">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>488</width>
+    <height>436</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Account Type: Exchange Server Mail Download via AirSync</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Account Information</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::ExpandingFieldsGrow</enum>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="whatsThis">
+         <string>Your Internet Service Provider gave you a &lt;em&gt;user name&lt;/em&gt; which is used to authenticate you with their servers. It usually is the first part of your email address (the part before &lt;em&gt;@&lt;/em&gt;).</string>
+        </property>
+        <property name="text">
+         <string>Account &amp;name:</string>
+        </property>
+        <property name="buddy">
+         <cstring>nameEdit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="KLineEdit" name="nameEdit">
+        <property name="toolTip">
+         <string>Name displayed in the list of accounts</string>
+        </property>
+        <property name="whatsThis">
+         <string>Account name: This defines the name displayed in the account list.</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Exchange Server</string>
+        </property>
+        <property name="buddy">
+         <cstring>serverEdit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="KLineEdit" name="serverEdit">
+        <property name="toolTip">
+         <string>Address of the mail POP3 server</string>
+        </property>
+        <property name="whatsThis">
+         <string>The address of the POP3 server, e.g. pop3.yourprovider.org. You should get this address from your mail provider.</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Windows Domain:</string>
+        </property>
+        <property name="buddy">
+         <cstring>userNameEdit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="KLineEdit" name="domainEdit">
+        <property name="toolTip">
+         <string>The username that identifies you against the mail server</string>
+        </property>
+        <property name="whatsThis">
+         <string>Your Internet Service Provider gave you a &lt;em&gt;user name&lt;/em&gt; which is used to authenticate you with their servers. It usually is the first part of your email address (the part before &lt;em&gt;@&lt;/em&gt;).</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Username:</string>
+        </property>
+        <property name="buddy">
+         <cstring>userNameEdit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="KLineEdit" name="userNameEdit">
+        <property name="toolTip">
+         <string>The username that identifies you against the mail server</string>
+        </property>
+        <property name="whatsThis">
+         <string>Your Internet Service Provider gave you a &lt;em&gt;user name&lt;/em&gt; which is used to authenticate you with their servers. It usually is the first part of your email address (the part before &lt;em&gt;@&lt;/em&gt;).</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="passwordLabel">
+        <property name="text">
+         <string>P&amp;assword:</string>
+        </property>
+        <property name="buddy">
+         <cstring>passwordEdit</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="KLineEdit" name="passwordEdit">
+        <property name="toolTip">
+         <string>Password for access to the mail server</string>
+        </property>
+        <property name="whatsThis">
+         <string>Password: Your Windows login password.</string>
+        </property>
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QCheckBox" name="showPasswordCheck">
+        <property name="text">
+         <string>Show Password</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="httpsCheck">
+        <property name="text">
+         <string>Secured Communication (https)</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="title">
+      <string>Mail Download Options</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QCheckBox" name="intervalCheck">
+        <property name="toolTip">
+         <string>If active, the POP3 account will be checked for new mail every x minutes</string>
+        </property>
+        <property name="text">
+         <string>Enable &amp;interval mail checking</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="intervalLabel">
+          <property name="text">
+           <string>Check mail interval:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="KIntNumInput" name="intervalSpin">
+          <property name="value">
+           <number>5</number>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>10000000</number>
+          </property>
+          <property name="suffix">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="leaveOnServerCheck">
+        <property name="toolTip">
+         <string>If checked the message is not deleted from the mail server</string>
+        </property>
+        <property name="whatsThis">
+         <string>Check this option if you want to fetch only copies of the mails and leave the original mails on the server.</string>
+        </property>
+        <property name="text">
+         <string>Lea&amp;ve fetched messages on the server</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Destination folder:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Akonadi::CollectionRequester" name="folderRequester">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KIntNumInput</class>
+   <extends>QWidget</extends>
+   <header>knuminput.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Akonadi::CollectionRequester</class>
+   <extends>QFrame</extends>
+   <header>Akonadi/CollectionRequester</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
