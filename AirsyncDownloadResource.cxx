@@ -1,161 +1,138 @@
-#include "AirsyncDownloadResource.hxx"
-#include "SettingsDialog.hxx"
+#include <AirsyncDownloadResource.hxx>
+#include <SettingsDialog.hxx>
+#include <Session.hxx>
 
 #include "settings.h"
 #include "settingsadaptor.h"
 
-#include <specialmailcollections.h>
+#include <akonadi/kmime/specialmailcollections.h>
+#include <akonadi/kmime/messageflags.h>
+#include <kwallet.h>
 
 #include <QtDBus/QDBusConnection>
-
-using namespace Akonadi;
+#include <QUuid>
 
 //--------------------------------------------------------------------------------
 
 AirsyncDownloadResource::AirsyncDownloadResource(const QString &id)
-  : ResourceBase(id), state(Idle)
+  : ResourceBase(id), session(0), downloadFinished(false)
 {
   new SettingsAdaptor(Settings::self());
   QDBusConnection::sessionBus()
     .registerObject(QLatin1String("/Settings"),
                     Settings::self(), QDBusConnection::ExportAdaptors);
 
+  QString deviceId = Settings::self()->deviceId();
+  if ( deviceId.isEmpty() )  // first time usage - create a unique device id
+  {
+    Settings::self()->setDeviceId(QUuid::createUuid().toString().replace('-', "").mid(1, 32));
+    Settings::self()->writeConfig();
+  }
+
   setNeedsNetwork(true);
 
   intervalTimer = new QTimer(this);
-  intervalTimer->setSingleShot(true);
+  intervalTimer->setSingleShot(false);
   connect(intervalTimer, SIGNAL(timeout()), this, SLOT(startMailCheck()));
 
-  updateIntervalTimer();
+  loadConfiguration();
+  connect(this, SIGNAL(reloadConfiguration()), this, SLOT(loadConfiguration()));
 
-  if ( SpecialMailCollections::self()->hasDefaultCollection(SpecialMailCollections::Inbox) )
-    targetCollection = SpecialMailCollections::self()->defaultCollection(SpecialMailCollections::Inbox);
-  else
-  {
-    // TODO setup SpecialMailCollectionsRequestJob
-  }
+  connect(this, SIGNAL(abortRequested()), this, SLOT(slotAbortRequested()));
+
+  setAutomaticProgressReporting(false);
 }
 
 //--------------------------------------------------------------------------------
 
 AirsyncDownloadResource::~AirsyncDownloadResource()
 {
+  delete session;
 }
 
 //--------------------------------------------------------------------------------
 
 void AirsyncDownloadResource::retrieveCollections()
 {
-  // TODO: this method is called when Akonadi wants to have all the
-  // collections your resource provides.
-  // Be sure to set the remote ID and the content MIME types
-
-  if ( state == Idle )
+  if ( status() == Idle )
     startMailCheck();
   else
   {
-    cancelSync(i18n("Mail check already in progress, unable to start a second check."));
+    cancelTask(i18n("Mail check already in progress, unable to start a second check."));
   }
 }
 
 //--------------------------------------------------------------------------------
 
-void AirsyncDownloadResource::retrieveItems( const Akonadi::Collection &collection )
+void AirsyncDownloadResource::retrieveItems(const Akonadi::Collection &collection)
 {
   Q_UNUSED( collection );
 
-  // TODO: this method is called when Akonadi wants to know about all the
-  // items in the given collection. You can but don't have to provide all the
-  // data for each item, remote ID and MIME type are enough at this stage.
-  // Depending on how your resource accesses the data, there are several
-  // different ways to tell Akonadi when you are done.
+  kWarning() << "This should never be called, we don't have a collection!";
 }
 
 //--------------------------------------------------------------------------------
 
-bool AirsyncDownloadResource::retrieveItem( const Akonadi::Item &item, const QSet<QByteArray> &parts )
+bool AirsyncDownloadResource::retrieveItem(const Akonadi::Item &item, const QSet<QByteArray> &parts)
 {
   Q_UNUSED( item );
   Q_UNUSED( parts );
 
-  // TODO: this method is called when Akonadi wants more data for a given item.
-  // You can only provide the parts that have been requested but you are allowed
-  // to provide all in one go
-
-  return true;
+  kWarning() << "This should never be called, we don't have any item!";
+  return false;
 }
 
 //--------------------------------------------------------------------------------
 
 void AirsyncDownloadResource::aboutToQuit()
 {
-  // TODO: any cleanup you need to do while there is still an active
-  // event loop. The resource will terminate after this method returns
+  if ( status() == Running )
+    cancelTask(i18n("Mail check aborted."));
 }
 
 //--------------------------------------------------------------------------------
 
-void AirsyncDownloadResource::configure( WId windowId )
+void AirsyncDownloadResource::slotAbortRequested()
+{
+  if ( status() == Running )
+  {
+    session->abortFetching();
+    cancelTask(i18n("Mail check was canceled manually."));
+    emit status(Idle, i18n("Ready"));
+  }
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::configure(WId windowId)
 {
   QPointer<SettingsDialog> dialog = new SettingsDialog(this, windowId);
 
   if ( dialog->exec() == QDialog::Accepted )
   {
-    updateIntervalTimer();
+    loadConfiguration();
     emit configurationDialogAccepted();
   }
   else
+  {
     emit configurationDialogRejected();
+  }
 
   delete dialog;
 }
 
 //--------------------------------------------------------------------------------
 
-void AirsyncDownloadResource::itemAdded( const Akonadi::Item &item, const Akonadi::Collection &collection )
+void AirsyncDownloadResource::loadConfiguration()
 {
-  Q_UNUSED( item );
-  Q_UNUSED( collection );
+  if ( status() != Idle )  // else we would delete session which is currently in use
+    return;
 
-  // TODO: this method is called when somebody else, e.g. a client application,
-  // has created an item in a collection managed by your resource.
+  delete session;
 
-  // NOTE: There is an equivalent method for collections, but it isn't part
-  // of this template code to keep it simple
-}
+  Settings::self()->readConfig();
 
-//--------------------------------------------------------------------------------
-
-void AirsyncDownloadResource::itemChanged( const Akonadi::Item &item, const QSet<QByteArray> &parts )
-{
-  Q_UNUSED( item );
-  Q_UNUSED( parts );
-
-  // TODO: this method is called when somebody else, e.g. a client application,
-  // has changed an item managed by your resource.
-
-  // NOTE: There is an equivalent method for collections, but it isn't part
-  // of this template code to keep it simple
-}
-
-//--------------------------------------------------------------------------------
-
-void AirsyncDownloadResource::itemRemoved( const Akonadi::Item &item )
-{
-  Q_UNUSED( item );
-
-  // TODO: this method is called when somebody else, e.g. a client application,
-  // has deleted an item managed by your resource.
-
-  // NOTE: There is an equivalent method for collections, but it isn't part
-  // of this template code to keep it simple
-}
-
-//--------------------------------------------------------------------------------
-
-void AirsyncDownloadResource::updateIntervalTimer()
-{
-  if ( Settings::self()->intervalCheckEnabled() && (state == Idle) )
+  if ( Settings::self()->intervalCheckEnabled() )
   {
     intervalTimer->start(Settings::self()->intervalCheckInterval() * 1000 * 60);
   }
@@ -163,14 +140,174 @@ void AirsyncDownloadResource::updateIntervalTimer()
   {
     intervalTimer->stop();
   }
+
+  targetCollection = Akonadi::Collection(Settings::self()->targetCollection());
+  if ( !targetCollection.isValid() )
+  {
+    emit status(NotConfigured, i18n("The configured mail target folder is not valid"));
+  }
+
+  KWallet::Wallet *wallet = KWallet::Wallet::openWallet(KWallet::Wallet::NetworkWallet(), winIdForDialogs());
+  if ( wallet )
+  {
+    if ( wallet->setFolder(KWallet::Wallet::PasswordFolder()) )
+      wallet->readPassword(identifier(), password);
+
+    delete wallet;
+  }
+
+  QString server;
+  if ( Settings::self()->secureHttp() )
+    server = QLatin1String("https://");
+  else
+    server = QLatin1String("http://");
+
+  server += Settings::self()->server();
+
+  session = new Session(server, Settings::self()->domain(),
+                        Settings::self()->userName(), password,
+                        Settings::self()->deviceId());
+
+  // hidden propertry, probably needed when some UA filter rule on the server changes
+  session->setUserAgent(Settings::self()->userAgent().toUtf8());
+
+  connect(session, SIGNAL(progress(int)), this, SIGNAL(percent(int)));
+  connect(session, SIGNAL(newMessage(KMime::Message::Ptr, QByteArray)),
+          this, SLOT(newMessage(KMime::Message::Ptr, QByteArray)));
+  connect(session, SIGNAL(errorMessage(QString)), this, SLOT(errorMessageChanged(QString)));
+  connect(session, SIGNAL(authRequired()), this, SLOT(authRequired()));
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::errorMessageChanged(const QString &msg)
+{
+  lastErrorMessage = msg;
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::authRequired()
+{
+  QString msg = i18n("The server authentication failed. Check username and password.");
+  cancelTask(msg);
+  emit status(NotConfigured, msg);
 }
 
 //--------------------------------------------------------------------------------
 
 void AirsyncDownloadResource::startMailCheck()
 {
+  if ( !isOnline() ||
+       (status() == Running) ||        // previous check still in progress
+       (status() == NotConfigured) )   // e.g. authentication error or targetCollection invalid
+    return;
+
   emit percent(0); // Otherwise the value from the last sync is taken
-  emit status(Running);
+  emit status(Running, i18n("Checking for new mails"));
+
+  mailsToDelete.clear();
+  pendingCreateJobs.clear();
+  downloadFinished = false;
+
+  int ret = session->fetchMails();
+  if ( ret < 0 )
+  {
+    QString msg = lastErrorMessage.isEmpty() ? i18n("Could not fetch mails from server") : lastErrorMessage;
+    if ( status() == Running )  // could already be NotConfigured (failed auth)
+    {
+      emit status(Broken, msg);
+    }
+    cancelTask(msg);
+    return;
+  }
+
+  downloadFinished = true;
+
+  if ( pendingCreateJobs.isEmpty() )  // no mail or all mails created
+    finish();
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::finish()
+{
+  if ( !mailsToDelete.isEmpty() )
+  {
+    emit status(Running, i18n("Deleting mails from the server."));
+
+    if ( session->deleteMails(mailsToDelete) < 0 )
+    {
+      QString msg = lastErrorMessage.isEmpty() ? i18n("Could not delete mails from the server") : lastErrorMessage;
+      emit status(Broken, msg);
+      cancelTask(msg);
+      return;
+    }
+  }
+
+  collectionsRetrieved(Akonadi::Collection::List());
+
+  int num = mailsToDelete.count();
+
+  if ( num == 0 )
+    emit status(Idle, i18n("Finished mail check, no mails downloaded."));
+  else
+  {
+    emit status(Idle, i18np("Finished mail check, 1 mail downloaded.",
+                            "Finished mail check, %1 mails downloaded.", num));
+  }
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::newMessage(KMime::Message::Ptr message, const QByteArray &mailId)
+{
+  if ( status() != Running )  // some error occured during item create jobs
+    return;
+
+  Akonadi::Item item;
+  item.setMimeType(QLatin1String("message/rfc822"));  // mail
+  item.setPayload<KMime::Message::Ptr>(message);
+
+  // update status flags
+  if ( KMime::isSigned(message.get()) )
+    item.setFlag(Akonadi::MessageFlags::Signed);
+
+  if ( KMime::isEncrypted(message.get()) )
+    item.setFlag(Akonadi::MessageFlags::Encrypted);
+
+  if ( KMime::isInvitation(message.get()) )
+    item.setFlag(Akonadi::MessageFlags::HasInvitation);
+
+  if ( KMime::hasAttachment( message.get()) )
+    item.setFlag(Akonadi::MessageFlags::HasAttachment);
+
+  Akonadi::ItemCreateJob *itemCreateJob = new Akonadi::ItemCreateJob(item, targetCollection);
+
+  pendingCreateJobs.insert(itemCreateJob, mailId);
+  connect(itemCreateJob, SIGNAL(result(KJob *)), this, SLOT(itemCreateJobResult(KJob *)));
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::itemCreateJobResult(KJob *job)
+{
+  QByteArray mailId = pendingCreateJobs.value(job);
+  pendingCreateJobs.remove(job);
+
+  if ( job->error() )
+  {
+    QString msg = i18n("Unable to store downloaded mails." ) +
+                  QLatin1Char('\n') + job->errorString();
+    emit status(Broken, msg);
+    cancelTask(msg);
+    return;
+  }
+
+  mailsToDelete.append(mailId);
+
+  if ( downloadFinished )
+    finish();
 }
 
 //--------------------------------------------------------------------------------

@@ -45,9 +45,10 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KDE4_ENABLE_EXCEPTIONS}" )
 
 ########### next target ###############
 
-set( airsyncdownloadresource_SRCS
+set(airsyncdownloadresource_SRCS
   AirsyncDownloadResource.cxx
   SettingsDialog.cxx
+  Session.cxx
 )
 
 install( FILES airsyncdownloadresource.desktop DESTINATION "${CMAKE_INSTALL_PREFIX}/share/akonadi/agents" )
@@ -64,6 +65,8 @@ kde4_add_executable(akonadi_airsyncdownload_resource RUN_UNINSTALLED ${airsyncdo
 target_link_libraries(akonadi_airsyncdownload_resource
     ${KDE4_AKONADI_LIBS}
     ${KDEPIMLIBS_AKONADI_KMIME_LIBS}
-    ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${KDE4_KDECORE_LIBS})
+    ${KDEPIMLIBS_KMIME_LIBS}
+    ${QT_QTCORE_LIBRARY} ${QT_QTNETWORK_LIBRARY} ${QT_QTXML_LIBRARY}
+    ${QT_QTDBUS_LIBRARY} ${KDE4_KDECORE_LIBS} wbxml2)
 
 install(TARGETS akonadi_airsyncdownload_resource ${INSTALL_TARGETS_DEFAULT_ARGS})

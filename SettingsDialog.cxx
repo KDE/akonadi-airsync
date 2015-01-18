@@ -12,8 +12,6 @@
 #include <KUser>
 #include <kwallet.h>
 
-#include <QUuid>
-
 using namespace Akonadi;
 using namespace KWallet;
 
@@ -35,7 +33,7 @@ SettingsDialog::SettingsDialog(AirsyncDownloadResource *res, WId parentWindow)
   ui.serverEdit->setValidator(&validator);
 
   ui.intervalSpin->setSuffix(ki18np(" minute", " minutes"));
-  ui.intervalSpin->setRange(ResourceSettings::self()->minimumCheckInterval(), 10000, 1);
+  ui.intervalSpin->setRange(1, 10000, 1);
 
   ui.folderRequester->setMimeTypeFilter(QStringList() << QLatin1String("message/rfc822"));
   ui.folderRequester->setFrameStyle(QFrame::NoFrame);
@@ -56,10 +54,6 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::loadSettings()
 {
-  QString deviceId = Settings::self()->deviceId();
-  if ( deviceId.isEmpty() )  // first time usage - create a unique device id
-    Settings::self()->setDeviceId(QUuid::createUuid().toString().replace('-', "").mid(1, 32));
-
   ui.nameEdit->setText(resource->name());
   ui.nameEdit->setFocus();
 
@@ -73,7 +67,6 @@ void SettingsDialog::loadSettings()
   ui.intervalCheck->setChecked(Settings::self()->intervalCheckEnabled());
   ui.intervalSpin->setValue(Settings::self()->intervalCheckInterval());
   ui.intervalSpin->setEnabled(Settings::self()->intervalCheckEnabled());
-  ui.leaveOnServerCheck->setChecked(Settings::self()->leaveMailsOnServer());
 
   // We need to fetch the collection, as the CollectionRequester needs the name
   // of it to work correctly
@@ -96,18 +89,22 @@ void SettingsDialog::loadSettings()
              this, SLOT(localFolderRequestJobFinished(KJob*)));
   }
 
-  wallet = Wallet::openWallet(Wallet::NetworkWallet(), winId(), Wallet::Asynchronous);
+  wallet = Wallet::openWallet(Wallet::NetworkWallet(), winId());
   if ( wallet )
   {
-    connect(wallet, SIGNAL(walletOpened(bool)),
-            this, SLOT(walletOpenedForLoading(bool)));
+    if ( !wallet->hasFolder(Wallet::PasswordFolder()) )
+      wallet->createFolder(Wallet::PasswordFolder());
+
+    wallet->setFolder(Wallet::PasswordFolder());  // set current folder
+
+    QString password;
+    if ( wallet->readPassword(resource->identifier(), password) == 0 )
+      ui.passwordEdit->setText(password);
   }
   else
   {
     ui.passwordEdit->setClickMessage(i18n("Wallet disabled in system settings"));
   }
-  ui.passwordEdit->setEnabled(false);
-  ui.passwordLabel->setEnabled(false);
 
   connect(ui.showPasswordCheck, SIGNAL(toggled(bool)), this, SLOT(showPasswordChecked(bool)));
 }
@@ -132,42 +129,6 @@ void SettingsDialog::localFolderRequestJobFinished(KJob *job)
 
 //--------------------------------------------------------------------------------
 
-void SettingsDialog::walletOpenedForLoading(bool success)
-{
-  if ( success )
-  {
-    if ( wallet->isOpen() )
-    {
-      ui.passwordEdit->setEnabled(true);
-      ui.passwordLabel->setEnabled(true);
-    }
-
-    if ( wallet->isOpen() && wallet->hasFolder("airsync") )
-    {
-      QString password;
-      wallet->setFolder("airsync");
-      wallet->readPassword(resource->identifier(), password);
-      ui.passwordEdit->setText(password);
-      initialPassword = password;
-    }
-    else
-    {
-      kWarning() << "Wallet not open or doesn't have airsync folder.";
-    }
-  }
-  else
-  {
-    kWarning() << "Failed to open wallet for loading the password.";
-  }
-
-  if ( !success || !wallet->isOpen() )
-  {
-    ui.passwordEdit->setClickMessage(i18n("Unable to open wallet"));
-  }
-}
-
-//--------------------------------------------------------------------------------
-
 void SettingsDialog::showPasswordChecked(bool checked)
 {
   if ( checked )
@@ -185,9 +146,7 @@ void SettingsDialog::slotButtonClicked(int button)
     case Ok:
     {
       saveSettings();
-
-      // Don't call accept() yet, saveSettings() triggers an asnychronous wallet operation,
-      // which will call accept() when it is finished
+      accept();
       break;
     }
 
@@ -212,88 +171,14 @@ void SettingsDialog::saveSettings()
 
   Settings::self()->setIntervalCheckEnabled(ui.intervalCheck->isChecked());
   Settings::self()->setIntervalCheckInterval(ui.intervalSpin->value());
-  Settings::self()->setLeaveMailsOnServer(ui.leaveOnServerCheck->isChecked());
 
   Settings::self()->setTargetCollection(ui.folderRequester->collection().id());
   Settings::self()->writeConfig();
 
-  // Now, either save the password or delete it from the wallet. For both, we need
-  // to open it.
-  const bool userChangedPassword = initialPassword != ui.passwordEdit->text();
-  const bool userWantsToDeletePassword =
-      ui.passwordEdit->text().isEmpty() && userChangedPassword;
-
-  if ( ( !ui.passwordEdit->text().isEmpty() && userChangedPassword ) ||
-       userWantsToDeletePassword )
+  if ( wallet )
   {
-    if ( wallet && wallet->isOpen() )
-    {
-      // wallet is already open
-      walletOpenedForSaving(true);
-    }
-    else
-    {
-      // we need to open the wallet
-      kDebug() << "we need to open the wallet";
-      wallet = Wallet::openWallet(Wallet::NetworkWallet(), winId(),
-                                  Wallet::Asynchronous);
-      if ( wallet )
-      {
-        connect(wallet, SIGNAL(walletOpened(bool)),
-                this, SLOT(walletOpenedForSaving(bool)));
-      }
-      else
-      {
-        accept();
-      }
-    }
+    wallet->writePassword(resource->identifier(), ui.passwordEdit->text());
   }
-  else
-  {
-    accept();
-  }
-}
-
-//--------------------------------------------------------------------------------
-
-void SettingsDialog::walletOpenedForSaving(bool success)
-{
-  if ( success )
-  {
-    if ( wallet && wallet->isOpen() )
-    {
-      // Remove the password from the wallet if the user doesn't want to store it
-      if ( ui.passwordEdit->text().isEmpty() && wallet->hasFolder("airsync") )
-      {
-        wallet->setFolder("airsync");
-        wallet->removeEntry(resource->identifier());
-      }
-      else if ( !ui.passwordEdit->text().isEmpty() )
-      {
-        // Store the password in the wallet if the user wants that
-        if ( !wallet->hasFolder("airsync") )
-          wallet->createFolder("airsync");
-
-        wallet->setFolder("airsync");
-        wallet->writePassword(resource->identifier(), ui.passwordEdit->text());
-      }
-
-      //resource->clearCachedPassword();
-    }
-    else
-    {
-      kWarning() << "Wallet not open.";
-    }
-  }
-  else
-  {
-    // Should we alert the user here?
-    kWarning() << "Failed to open wallet for saving the password.";
-  }
-
-  delete wallet;
-  wallet = 0;
-  accept();
 }
 
 //--------------------------------------------------------------------------------

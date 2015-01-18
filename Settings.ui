@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>488</width>
-    <height>436</height>
+    <height>408</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Account Type: Exchange Server Mail Download via AirSync</string>
+      <string>Exchange Server Mail Download via AirSync</string>
      </property>
     </widget>
    </item>
@@ -34,7 +34,7 @@
      </property>
      <layout class="QFormLayout" name="formLayout">
       <property name="fieldGrowthPolicy">
-       <enum>QFormLayout::ExpandingFieldsGrow</enum>
+       <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
       </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
@@ -151,6 +151,12 @@
       </item>
       <item row="3" column="1">
        <widget class="QCheckBox" name="httpsCheck">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Secured Communication (https)</string>
         </property>
@@ -186,6 +192,9 @@
         </item>
         <item>
          <widget class="KIntNumInput" name="intervalSpin">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="value">
            <number>5</number>
           </property>
@@ -201,19 +210,6 @@
          </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="leaveOnServerCheck">
-        <property name="toolTip">
-         <string>If checked the message is not deleted from the mail server</string>
-        </property>
-        <property name="whatsThis">
-         <string>Check this option if you want to fetch only copies of the mails and leave the original mails on the server.</string>
-        </property>
-        <property name="text">
-         <string>Lea&amp;ve fetched messages on the server</string>
-        </property>
-       </widget>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -261,5 +257,22 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>intervalCheck</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>intervalSpin</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>84</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

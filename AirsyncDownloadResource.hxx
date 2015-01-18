@@ -2,7 +2,10 @@
 #define AIRSYNCDOWNLOADRESOURCE_H
 
 #include <akonadi/resourcebase.h>
+#include <Akonadi/ItemCreateJob>
 #include <QTimer>
+#include <KMime/Message>
+class Session;
 
 class AirsyncDownloadResource : public Akonadi::ResourceBase,
                                 public Akonadi::AgentBase::Observer
@@ -24,24 +27,27 @@ class AirsyncDownloadResource : public Akonadi::ResourceBase,
   protected:
     virtual void aboutToQuit();
 
-    virtual void itemAdded(const Akonadi::Item &item, const Akonadi::Collection &collection);
-    virtual void itemChanged(const Akonadi::Item &item, const QSet<QByteArray> &parts);
-    virtual void itemRemoved(const Akonadi::Item &item);
-
   private Q_SLOTS:
+    void loadConfiguration();
     void startMailCheck();
+    void newMessage(KMime::Message::Ptr message, const QByteArray &mailId);
+    void itemCreateJobResult(KJob *job);
+    void errorMessageChanged(const QString &msg);
+    void authRequired();
+    void slotAbortRequested();
 
   private:  // methods
-    void updateIntervalTimer();
+    void finish();
 
   private:  // members
     QTimer *intervalTimer;
     Akonadi::Collection targetCollection;
-
-    enum State
-    {
-      Idle,
-    } state;
+    QString password; // from wallet
+    Session *session;
+    QMap<KJob *, QByteArray> pendingCreateJobs;
+    QList<QByteArray> mailsToDelete;
+    bool downloadFinished;
+    QString lastErrorMessage;
 };
 
 #endif

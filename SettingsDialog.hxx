@@ -23,11 +23,11 @@ class SettingsDialog : public KDialog
     SettingsDialog(AirsyncDownloadResource *resource, WId parentWindow);
     virtual ~SettingsDialog();
 
+    QString getPassword() const { return ui.passwordEdit->text(); }
+
   private slots:
     void targetCollectionReceived(Akonadi::Collection::List collections);
     void localFolderRequestJobFinished(KJob *job);
-    void walletOpenedForLoading(bool success);
-    void walletOpenedForSaving(bool success);
     void showPasswordChecked(bool checked);
     virtual void slotButtonClicked(int button);
 
@@ -40,7 +40,6 @@ class SettingsDialog : public KDialog
     Ui::Settings ui;
     QRegExpValidator validator;
     KWallet::Wallet *wallet;
-    QString initialPassword;
 };
 
 #endif
