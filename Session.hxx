@@ -42,7 +42,6 @@ class Session : public QObject
     static bool dataToWbXml(const QByteArray &data, QByteArray &result);
     static bool dataFromWbXml(const QByteArray &data, QByteArray &result);
 
-    void setDebug(bool d) { debug = d; }
 
     void setUserAgent(const QByteArray &ua) { userAgent = ua; }
 
@@ -63,6 +62,8 @@ class Session : public QObject
   private:
     int init();
     void setPolicyKey(uint key) { policyKey = key; }
+    static int debugArea();
+    static int debugArea2();
 
     QNetworkAccessManager *nam;
     QEventLoop *eventLoop;
@@ -73,7 +74,7 @@ class Session : public QObject
     QByteArray collectionId;
     QByteArray collectionSyncKey;
     uint policyKey;
-    bool debug;
     bool wroteSslWarning;
     bool aborted;
+    bool errorOccured;
 };

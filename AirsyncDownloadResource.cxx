@@ -17,6 +17,8 @@
 AirsyncDownloadResource::AirsyncDownloadResource(const QString &id)
   : ResourceBase(id), session(0), downloadFinished(false)
 {
+  setNeedsNetwork(true);
+
   new SettingsAdaptor(Settings::self());
   QDBusConnection::sessionBus()
     .registerObject(QLatin1String("/Settings"),
@@ -28,8 +30,6 @@ AirsyncDownloadResource::AirsyncDownloadResource(const QString &id)
     Settings::self()->setDeviceId(QUuid::createUuid().toString().replace('-', "").mid(1, 32));
     Settings::self()->writeConfig();
   }
-
-  setNeedsNetwork(true);
 
   intervalTimer = new QTimer(this);
   intervalTimer->setSingleShot(false);
@@ -54,7 +54,19 @@ AirsyncDownloadResource::~AirsyncDownloadResource()
 
 void AirsyncDownloadResource::retrieveCollections()
 {
-  if ( status() == Idle )
+  if ( status() == NotConfigured )
+  {
+    cancelTask(i18n("The resource is not configured correctly and can not work."));
+    return;
+  }
+
+  if ( !isOnline() )
+  {
+    cancelTask(i18n("The resource is offline."));
+    return;
+  }
+
+  if ( status() != Running )
     startMailCheck();
   else
   {
@@ -87,7 +99,10 @@ bool AirsyncDownloadResource::retrieveItem(const Akonadi::Item &item, const QSet
 void AirsyncDownloadResource::aboutToQuit()
 {
   if ( status() == Running )
+  {
+    session->abortFetching();
     cancelTask(i18n("Mail check aborted."));
+  }
 }
 
 //--------------------------------------------------------------------------------
@@ -203,7 +218,6 @@ void AirsyncDownloadResource::startMailCheck()
        (status() == NotConfigured) )   // e.g. authentication error or targetCollection invalid
     return;
 
-  emit percent(0); // Otherwise the value from the last sync is taken
   emit status(Running, i18n("Checking for new mails"));
 
   mailsToDelete.clear();
@@ -213,13 +227,21 @@ void AirsyncDownloadResource::startMailCheck()
   int ret = session->fetchMails();
   if ( ret < 0 )
   {
-    QString msg = lastErrorMessage.isEmpty() ? i18n("Could not fetch mails from server") : lastErrorMessage;
+    // e.g. the server sends "Retry after sending a PROVISION command"
+    // let's try one more time (Session has already reset its policyKey)
     if ( status() == Running )  // could already be NotConfigured (failed auth)
+      ret = session->fetchMails();
+
+    if ( ret < 0 )
     {
-      emit status(Broken, msg);
+      QString msg = lastErrorMessage.isEmpty() ? i18n("Could not fetch mails from server") : lastErrorMessage;
+      if ( status() == Running )  // could already be NotConfigured (failed auth)
+      {
+        emit status(Broken, msg);
+      }
+      cancelTask(msg);
+      return;
     }
-    cancelTask(msg);
-    return;
   }
 
   downloadFinished = true;
@@ -269,6 +291,9 @@ void AirsyncDownloadResource::newMessage(KMime::Message::Ptr message, const QByt
   item.setMimeType(QLatin1String("message/rfc822"));  // mail
   item.setPayload<KMime::Message::Ptr>(message);
 
+  // TODO: change to following when included in upstream code
+  // Akonadi::MessageFlags::copyMessageFlags(*message, item);
+
   // update status flags
   if ( KMime::isSigned(message.get()) )
     item.setFlag(Akonadi::MessageFlags::Signed);
@@ -279,7 +304,7 @@ void AirsyncDownloadResource::newMessage(KMime::Message::Ptr message, const QByt
   if ( KMime::isInvitation(message.get()) )
     item.setFlag(Akonadi::MessageFlags::HasInvitation);
 
-  if ( KMime::hasAttachment( message.get()) )
+  if ( KMime::hasAttachment(message.get()) )
     item.setFlag(Akonadi::MessageFlags::HasAttachment);
 
   Akonadi::ItemCreateJob *itemCreateJob = new Akonadi::ItemCreateJob(item, targetCollection);
@@ -308,6 +333,19 @@ void AirsyncDownloadResource::itemCreateJobResult(KJob *job)
 
   if ( downloadFinished )
     finish();
+}
+
+//--------------------------------------------------------------------------------
+
+void AirsyncDownloadResource::doSetOnline(bool online)
+{
+  ResourceBase::doSetOnline(online);
+
+  if ( !online && (status() == Running) )
+  {
+    session->abortFetching();
+    cancelTask(i18n("Mail check aborted after going offline."));
+  }
 }
 
 //--------------------------------------------------------------------------------

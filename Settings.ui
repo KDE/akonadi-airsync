@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
+    <width>567</width>
     <height>408</height>
    </rect>
   </property>
@@ -23,7 +23,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Exchange Server Mail Download via AirSync</string>
+      <string>Exchange Server Mail Download via AirSync (Exchange Active Sync)</string>
      </property>
     </widget>
    </item>
@@ -72,10 +72,10 @@
       <item row="1" column="1">
        <widget class="KLineEdit" name="serverEdit">
         <property name="toolTip">
-         <string>Address of the mail POP3 server</string>
+         <string>Address of the mail server</string>
         </property>
         <property name="whatsThis">
-         <string>The address of the POP3 server, e.g. pop3.yourprovider.org. You should get this address from your mail provider.</string>
+         <string>The address of the Exchange server, e.g. smartmobile.yourprovider.org. You should get this address from your system administrator.</string>
         </property>
        </widget>
       </item>
@@ -92,10 +92,10 @@
       <item row="4" column="1">
        <widget class="KLineEdit" name="domainEdit">
         <property name="toolTip">
-         <string>The username that identifies you against the mail server</string>
+         <string>The Windows domain name</string>
         </property>
         <property name="whatsThis">
-         <string>Your Internet Service Provider gave you a &lt;em&gt;user name&lt;/em&gt; which is used to authenticate you with their servers. It usually is the first part of your email address (the part before &lt;em&gt;@&lt;/em&gt;).</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -115,7 +115,7 @@
          <string>The username that identifies you against the mail server</string>
         </property>
         <property name="whatsThis">
-         <string>Your Internet Service Provider gave you a &lt;em&gt;user name&lt;/em&gt; which is used to authenticate you with their servers. It usually is the first part of your email address (the part before &lt;em&gt;@&lt;/em&gt;).</string>
+         <string>Your Windows login name</string>
         </property>
        </widget>
       </item>
@@ -135,7 +135,7 @@
          <string>Password for access to the mail server</string>
         </property>
         <property name="whatsThis">
-         <string>Password: Your Windows login password.</string>
+         <string>Your Windows login password.</string>
         </property>
         <property name="echoMode">
          <enum>QLineEdit::Password</enum>
@@ -174,7 +174,7 @@
       <item>
        <widget class="QCheckBox" name="intervalCheck">
         <property name="toolTip">
-         <string>If active, the POP3 account will be checked for new mail every x minutes</string>
+         <string>If active, the account will be checked for new mail every x minutes</string>
         </property>
         <property name="text">
          <string>Enable &amp;interval mail checking</string>

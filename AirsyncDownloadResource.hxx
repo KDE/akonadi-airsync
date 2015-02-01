@@ -14,7 +14,7 @@ class AirsyncDownloadResource : public Akonadi::ResourceBase,
 
   public:
     AirsyncDownloadResource(const QString &id);
-    ~AirsyncDownloadResource();
+    virtual ~AirsyncDownloadResource();
 
   public Q_SLOTS:
     virtual void configure(WId windowId);
@@ -26,6 +26,7 @@ class AirsyncDownloadResource : public Akonadi::ResourceBase,
 
   protected:
     virtual void aboutToQuit();
+    virtual void doSetOnline(bool online);
 
   private Q_SLOTS:
     void loadConfiguration();

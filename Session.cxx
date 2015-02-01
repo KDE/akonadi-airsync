@@ -24,15 +24,37 @@
 #include <QUuid>
 #include <QSslError>
 #include <QDomDocument>
+#include <QDateTime>
 
 #include <KDebug>
+
+//--------------------------------------------------------------------------------
+
+int Session::debugArea()
+{
+  static int num = KDebug::registerArea("airSync"); 
+  return num;
+}
+
+//--------------------------------------------------------------------------------
+
+int Session::debugArea2()
+{
+  static int num = KDebug::registerArea("airSync2"); 
+  return num;
+}
+
+//--------------------------------------------------------------------------------
+
+#define PRINT_DEBUG(x) { kDebug(debugArea()) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
+#define PRINT_DEBUG2(x) { kDebug(debugArea2()) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
 
 //--------------------------------------------------------------------------------
 
 Session::Session(const QString &server, const QString &domain,
                  const QString &username, const QString &password,
                  const QString &uniqueDeviceId)
-  : serverUrl(server), policyKey(0), debug(false), wroteSslWarning(false), aborted(false)
+  : serverUrl(server), policyKey(0), wroteSslWarning(false), aborted(false), errorOccured(false)
 {
   nam = new QNetworkAccessManager(this);
   eventLoop = new QEventLoop(this);
@@ -70,11 +92,8 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
     "<!DOCTYPE ActiveSync PUBLIC \"-//MICROSOFT//DTD ActiveSync//EN\" \"http://www.microsoft.com/\">\n";
 
-  if ( debug )
-  {
-    kDebug() << "------------------------- posting";
-    kDebug() << req.url().toString();
-  }
+  PRINT_DEBUG("------------------------- posting");
+  PRINT_DEBUG(req.url().toString());
 
   req.setRawHeader("Authorization", QByteArray("Basic ") + loginBase64);
   req.setRawHeader("MS-ASProtocolVersion", "12.1");
@@ -86,19 +105,19 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
   req.setHeader(QNetworkRequest::ContentTypeHeader, "application/vnd.ms-sync.wbxml");
   QByteArray wbxml;
   if ( !dataToWbXml(xmlHeader + data, wbxml) )
-    return "";
+    return QByteArray();
 
-  if ( debug )
+  if ( !KDebug::hasNullOutputQtDebugMsg(debugArea2()) )
   {
     QList<QByteArray> rawHeaders = req.rawHeaderList();
     for (int i = 0; i < rawHeaders.count(); i++)
-      kDebug() << "SENDING: " << rawHeaders[i] << ":" << req.rawHeader(rawHeaders[i]);
+      PRINT_DEBUG2("SENDING: " << rawHeaders[i] << ":" << req.rawHeader(rawHeaders[i]));
 
-    kDebug() << data;
-    kDebug() << "decoded again from wbxml; this is what the server sees";
+    PRINT_DEBUG2(data);
+    PRINT_DEBUG2("decoded again from wbxml; this is what the server sees");
     QByteArray test;
     dataFromWbXml(wbxml, test);
-    kDebug() << test;
+    PRINT_DEBUG2(test);
   }
 
   QNetworkReply *reply = nam->post(req, wbxml);
@@ -106,39 +125,54 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
   connect(reply, SIGNAL(finished()), eventLoop, SLOT(quit()));
   connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), eventLoop, SLOT(quit()));
 
-  if ( debug ) kDebug() << "sent ...";
+  PRINT_DEBUG("sent ...");
   eventLoop->exec();
-  if ( debug ) kDebug() << "received ...";
+
+  if ( reply->isRunning() )  // event loop was stopped prematurely
+  {
+    reply->abort();
+    PRINT_DEBUG("aborted");
+    delete reply;
+    return QByteArray();
+  }
+
+  PRINT_DEBUG("received ...");
 
   QByteArray result = reply->readAll();
 
-  if ( debug )
+  if ( !KDebug::hasNullOutputQtDebugMsg(debugArea2()) )
   {
     QList<QByteArray> rawHeaders = reply->rawHeaderList();
     for (int i = 0; i < rawHeaders.count(); i++)
-      kDebug() << "RECEIVED:" << rawHeaders[i] << ":" << reply->rawHeader(rawHeaders[i]);
+      PRINT_DEBUG2("RECEIVED:" << rawHeaders[i] << ":" << reply->rawHeader(rawHeaders[i]));
 
-    kDebug() << "HTTP result code:" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    PRINT_DEBUG2("HTTP result code:" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt());
   }
 
   if ( reply->error() != QNetworkReply::NoError )
   {
     emit errorMessage(reply->errorString());
+    errorOccured = true;
 
     if ( reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 401 )
       emit authRequired();
 
-    kDebug() << "ERROR:" << reply->errorString();
-    kDebug() << req.url().toString();
+    PRINT_DEBUG("ERROR:" << reply->error() << "http status:" <<
+                reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() << reply->errorString());
+    PRINT_DEBUG(req.url().toString());
+
+    policyKey = 0; // some error - let's try from scratch
+    // e.g. the server sends "Retry after sending a PROVISION command"
   }
   else
   {
     emit errorMessage(QString());
+    errorOccured = false;
 
     if ( !result.isEmpty() )
       dataFromWbXml(result, result);
 
-    if ( debug ) kDebug() << "data:" << result;
+    PRINT_DEBUG("data:" << result);
   }
 
   delete reply;
@@ -153,10 +187,10 @@ void Session::sslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
   reply->ignoreSslErrors();  // ignore all errors
 
   // log errors
-  if ( debug || !wroteSslWarning )
+  if ( !wroteSslWarning )
   {
     foreach (QSslError error, errors)
-      kDebug() << "SSL Error: " << error.errorString();
+      PRINT_DEBUG("SSL Error: " << error.errorString());
 
     wroteSslWarning = true;  // always write at least the first SSL errors
   }
@@ -174,8 +208,8 @@ bool Session::dataToWbXml(const QByteArray &data, QByteArray &result)
 
   if ( error != WBXML_OK )
   {
-    kDebug() << "-error- wbxml_tree_from_xml:" << QByteArray::number(error) <<
-             QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error)));
+    PRINT_DEBUG("-error- wbxml_tree_from_xml:" << QByteArray::number(error) <<
+                QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
     return false;
   }
 
@@ -192,8 +226,8 @@ bool Session::dataToWbXml(const QByteArray &data, QByteArray &result)
 
   if ( error != WBXML_OK )
   {
-    kDebug() << "-error- wbxml_tree_to_wbxml:" << QByteArray::number(error) <<
-             QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error)));
+    PRINT_DEBUG("-error- wbxml_tree_to_wbxml:" << QByteArray::number(error) <<
+                QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
     return false;
   }
 
@@ -222,9 +256,9 @@ bool Session::dataFromWbXml(const QByteArray &data, QByteArray &result)
 
   if ( error != WBXML_OK )
   {
-    kDebug() << "-error- wbxml_conv_wbxml2xml_withlen:" << QByteArray::number(error) <<
-             QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error)));
-    kDebug() << "input was:" << data.toPercentEncoding();
+    PRINT_DEBUG("-error- wbxml_conv_wbxml2xml_withlen:" << QByteArray::number(error) <<
+                QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
+    PRINT_DEBUG("input was:" << data.toPercentEncoding());
     return false;
   }
 
@@ -256,6 +290,7 @@ int Session::init()
 
   data = sendCommand("Provision", data);
   if ( aborted ) return 0;
+  if ( errorOccured ) return -1;
 
   QDomDocument doc;
   if ( !doc.setContent(data) )
@@ -287,6 +322,7 @@ int Session::init()
         "</Provision>";
   data = sendCommand("Provision", data);
   if ( aborted ) return 0;
+  if ( errorOccured ) return -1;
 
   // set the final session policyKey
   if  ( !doc.setContent(data) )
@@ -311,6 +347,7 @@ int Session::init()
     "</FolderSync>\n";
   data = sendCommand("FolderSync", data);
   if ( aborted ) return 0;
+  if ( errorOccured ) return -1;
 
   if ( !doc.setContent(data) )
   {
@@ -335,10 +372,11 @@ int Session::init()
 
   if ( collectionId.isEmpty() )
   {
-    kDebug() << "Folder '" << folderName << "' not found";
+    PRINT_DEBUG("Folder '" << folderName << "' not found");
     return -1;
   }
 
+  collectionSyncKey.clear();
   return 0;
 }
 
@@ -346,6 +384,8 @@ int Session::init()
 
 int Session::fetchMails()
 {
+  emit progress(0);
+
   if ( init() != 0 )
     return -1;
 
@@ -368,6 +408,8 @@ int Session::fetchMails()
 
     data = sendCommand("Sync", data);
     if ( aborted ) return 0;
+    if ( errorOccured ) return -1;
+
     doc.setContent(data);
 
     collectionSyncKey =
@@ -376,8 +418,7 @@ int Session::fetchMails()
           .firstChildElement("Collection")
           .firstChildElement("SyncKey").text().toUtf8();
 
-    if ( debug )
-      kDebug() << "collectionSyncKey=" << collectionSyncKey;
+    PRINT_DEBUG("collectionSyncKey=" << collectionSyncKey);
 
     emit progress(17);  // by definition: after first syncKey
   }
@@ -395,11 +436,11 @@ int Session::fetchMails()
 
   data = sendCommand("Sync", data);
   if ( aborted ) return 0;
+  if ( errorOccured ) return -1;
 
   if ( data.isEmpty() )  // no mails to download
   {
-    if ( debug )
-      kDebug() << "no new mails to download";
+    PRINT_DEBUG("no new mails to download");
 
     emit progress(100);
     return 0;
@@ -413,16 +454,14 @@ int Session::fetchMails()
         .firstChildElement("Collection")
         .firstChildElement("SyncKey").text().toUtf8();
 
-  if ( debug )
-    kDebug() << "collectionSyncKey=" << collectionSyncKey;
+  PRINT_DEBUG("collectionSyncKey=" << collectionSyncKey);
 
   emit progress(20);
 
   // fetch each mail
   QDomNodeList list = doc.elementsByTagName("Add");
 
-  if ( debug )
-    kDebug() << list.count() << "new mails to download";
+  PRINT_DEBUG(list.count() << "new mails to download");
 
   if ( list.count() == 0 )
   {
@@ -457,6 +496,7 @@ int Session::fetchMails()
 
     data = sendCommand("ItemOperations", data);
     if ( aborted ) return 0;
+    if ( errorOccured ) return -1;
 
     currentProgress += progressPerMail;
     emit progress(currentProgress);
@@ -474,7 +514,7 @@ int Session::fetchMails()
 
       if ( fullMail.isEmpty() )
       {
-        kDebug() << "mail is empty (mailId= << mailId << ) There's probably something going wrong!!";
+        PRINT_DEBUG("mail is empty (mailId= << mailId << ) There's probably something going wrong!!");
         continue;
       }
 
@@ -517,6 +557,7 @@ int Session::deleteMails(const QList<QByteArray> &mailIds)
          "</Sync>";
 
   data = sendCommand("Sync", data);
+  if ( errorOccured ) return -1;
 
   emit progress(90);
 
@@ -533,11 +574,8 @@ int Session::deleteMails(const QList<QByteArray> &mailIds)
         .firstChildElement("Collection")
         .firstChildElement("SyncKey").text().toUtf8();
 
-  if ( debug )
-  {
-    kDebug() << "collectionSyncKey=" << collectionSyncKey;
-    kDebug() << mailIds.count() << "mails deleted from server";
-  }
+  PRINT_DEBUG("collectionSyncKey=" << collectionSyncKey);
+  PRINT_DEBUG(mailIds.count() << "mails deleted from server");
 
   emit progress(100);
   return 0;
