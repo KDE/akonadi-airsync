@@ -1,2 +1,2 @@
 #! /usr/bin/env bash
-$XGETTEXT *.cpp -o $podir/akonadi_airsyncdownload_resource.pot
+$XGETTEXT *.cxx -o $podir/akonadi_airsyncdownload_resource.pot
