@@ -1,19 +1,23 @@
 [Desktop Entry]
 Name=Exchange ActiveSync Mail Download
 Name[ca]=Baixa el correu per a Exchange ActiveSync
+Name[it]=Scaricamento posta con Exchange ActiveSync
 Name[nl]=E-mail downloaden van Exchange met ActiveSync
 Name[pl]=Pobieranie poczty Exchange ActiveSync
 Name[pt]=Transferência de Correio por ActiveSync do Exchange
 Name[pt_BR]=Transferência de e-mails por ActiveSync do Exchange
+Name[sk]=Sťahovanie pošty Exchange ActiveSync
 Name[sv]=Exchange ActiveSync e-postnerladdning
 Name[uk]=Отримання пошти Exchange для ActiveSync
 Name[x-test]=xxExchange ActiveSync Mail Downloadxx
 Comment=Downloads emails from an Exchange Server using the AirSync protocol
 Comment[ca]=Baixa els correus electrònics des d'un servidor Exchange emprant el protocol AirSync
+Comment[it]=Scarica i messaggi di posta elettronica da un server Exchange utilizzando il protocollo AirSync
 Comment[nl]=Download e-mails van een Exchange-server met het AirSync protocol
 Comment[pl]=Pobiera pocztę z serwera Exchange przy użyciu protokołu AirSync
 Comment[pt]=Transfere e-mails de um servidor de Exchange, usando o protocolo AirSync
 Comment[pt_BR]=Baixa e-mails de um servidor Exchange usando o protocolo AirSync
+Comment[sk]=Stiahne e-maily z Exchange servera pomocou protokolu AirSync
 Comment[sv]=Laddar ner e-post från en Exchange-server med användning av AirSync-protokollet
 Comment[uk]=Отримує повідомлення з сервера Exchange за допомогою протоколу AirSync
 Comment[x-test]=xxDownloads emails from an Exchange Server using the AirSync protocolxx
