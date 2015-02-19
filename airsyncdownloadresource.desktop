@@ -12,6 +12,7 @@ Name[uk]=Отримання пошти Exchange для ActiveSync
 Name[x-test]=xxExchange ActiveSync Mail Downloadxx
 Comment=Downloads emails from an Exchange Server using the AirSync protocol
 Comment[ca]=Baixa els correus electrònics des d'un servidor Exchange emprant el protocol AirSync
+Comment[cs]=Stáhnout e-maily ze servery Exchange pomocí protokolu AirSync
 Comment[it]=Scarica i messaggi di posta elettronica da un server Exchange utilizzando il protocollo AirSync
 Comment[nl]=Download e-mails van een Exchange-server met het AirSync protocol
 Comment[pl]=Pobiera pocztę z serwera Exchange przy użyciu protokołu AirSync
