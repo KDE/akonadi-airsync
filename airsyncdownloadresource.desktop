@@ -1,5 +1,6 @@
 [Desktop Entry]
 Name=Exchange ActiveSync Mail Download
+Name[bs]=Exchange ActiveSync preuzimanje pošte
 Name[ca]=Baixa el correu per a Exchange ActiveSync
 Name[it]=Scaricamento posta con Exchange ActiveSync
 Name[nl]=E-mail downloaden van Exchange met ActiveSync
@@ -11,6 +12,7 @@ Name[sv]=Exchange ActiveSync e-postnerladdning
 Name[uk]=Отримання пошти Exchange для ActiveSync
 Name[x-test]=xxExchange ActiveSync Mail Downloadxx
 Comment=Downloads emails from an Exchange Server using the AirSync protocol
+Comment[bs]=Preuzmite elektronskui poštu s Exhange servera koristeći AirSync protokol
 Comment[ca]=Baixa els correus electrònics des d'un servidor Exchange emprant el protocol AirSync
 Comment[cs]=Stáhnout e-maily ze servery Exchange pomocí protokolu AirSync
 Comment[it]=Scarica i messaggi di posta elettronica da un server Exchange utilizzando il protocollo AirSync
