@@ -224,7 +224,7 @@ void AirsyncDownloadResource::authRequired()
 {
   QString msg = i18n("The server authentication failed. Check username and password.");
   cancelTask(msg);
-  emit status(NotConfigured, msg);
+  emit status(Broken, msg);
 }
 
 //--------------------------------------------------------------------------------
