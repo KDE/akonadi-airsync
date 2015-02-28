@@ -514,7 +514,7 @@ int Session::fetchMails()
 
       if ( fullMail.isEmpty() )
       {
-        PRINT_DEBUG("mail is empty (mailId= << mailId << ) There's probably something going wrong!!");
+        PRINT_DEBUG("mail is empty (mailId=" << mailId << ") There's probably something going wrong!!");
         continue;
       }
 
