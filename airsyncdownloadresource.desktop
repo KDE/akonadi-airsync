@@ -2,6 +2,7 @@
 Name=Exchange ActiveSync Mail Download
 Name[bs]=Exchange ActiveSync preuzimanje pošte
 Name[ca]=Baixa el correu per a Exchange ActiveSync
+Name[fr]=Récupérer le courrier via ActiveSync
 Name[it]=Scaricamento posta con Exchange ActiveSync
 Name[nl]=E-mail downloaden van Exchange met ActiveSync
 Name[pl]=Pobieranie poczty Exchange ActiveSync
@@ -15,6 +16,7 @@ Comment=Downloads emails from an Exchange Server using the AirSync protocol
 Comment[bs]=Preuzmite elektronskui poštu s Exhange servera koristeći AirSync protokol
 Comment[ca]=Baixa els correus electrònics des d'un servidor Exchange emprant el protocol AirSync
 Comment[cs]=Stáhnout e-maily ze servery Exchange pomocí protokolu AirSync
+Comment[fr]=Récupère le courrier électronique depuis le Serveur d'Échange en utilisant le protocole AirSync.
 Comment[it]=Scarica i messaggi di posta elettronica da un server Exchange utilizzando il protocollo AirSync
 Comment[nl]=Download e-mails van een Exchange-server met het AirSync protocol
 Comment[pl]=Pobiera pocztę z serwera Exchange przy użyciu protokołu AirSync
