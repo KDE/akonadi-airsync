@@ -19,6 +19,7 @@ Comment[ast]=Descarga los correos d'un sirvidor Exchange usando'l protocolu AirS
 Comment[bs]=Preuzmite elektronskui poštu s Exhange servera koristeći AirSync protokol
 Comment[ca]=Baixa els correus electrònics des d'un servidor Exchange emprant el protocol AirSync
 Comment[cs]=Stáhnout e-maily ze servery Exchange pomocí protokolu AirSync
+Comment[de]=E-Mails von einem Exchange-Server mit dem Protokoll AirSync herunterladen
 Comment[es]=Descarga mensajes de correo electrónico de un servidor Exchange usando el protocolo AirSync
 Comment[fi]=Lataa viestit Exchange-palvelimelta AirSync-yhteyskäytännöllä
 Comment[fr]=Récupère le courrier électronique depuis le Serveur d'Échange en utilisant le protocole AirSync.
