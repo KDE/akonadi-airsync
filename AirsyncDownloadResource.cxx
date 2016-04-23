@@ -46,7 +46,7 @@ AirsyncDownloadResource::AirsyncDownloadResource(const QString &id)
   if ( deviceId.isEmpty() )  // first time usage - create a unique device id
   {
     Settings::self()->setDeviceId(QUuid::createUuid().toString().replace('-', "").mid(1, 32));
-    Settings::self()->writeConfig();
+    Settings::self()->save();
   }
 
   intervalTimer = new QTimer(this);
@@ -98,7 +98,7 @@ void AirsyncDownloadResource::retrieveItems(const Akonadi::Collection &collectio
 {
   Q_UNUSED( collection );
 
-  kWarning() << "This should never be called, we don't have a collection!";
+  qWarning() << "This should never be called, we don't have a collection!";
 }
 
 //--------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ bool AirsyncDownloadResource::retrieveItem(const Akonadi::Item &item, const QSet
   Q_UNUSED( item );
   Q_UNUSED( parts );
 
-  kWarning() << "This should never be called, we don't have any item!";
+  qWarning() << "This should never be called, we don't have any item!";
   return false;
 }
 
@@ -163,7 +163,7 @@ void AirsyncDownloadResource::loadConfiguration()
 
   delete session;
 
-  Settings::self()->readConfig();
+  Settings::self()->load();
 
   if ( Settings::self()->intervalCheckEnabled() )
   {
@@ -309,21 +309,7 @@ void AirsyncDownloadResource::newMessage(KMime::Message::Ptr message, const QByt
   item.setMimeType(QLatin1String("message/rfc822"));  // mail
   item.setPayload<KMime::Message::Ptr>(message);
 
-  // TODO: change to following when included in upstream code
-  // Akonadi::MessageFlags::copyMessageFlags(*message, item);
-
-  // update status flags
-  if ( KMime::isSigned(message.get()) )
-    item.setFlag(Akonadi::MessageFlags::Signed);
-
-  if ( KMime::isEncrypted(message.get()) )
-    item.setFlag(Akonadi::MessageFlags::Encrypted);
-
-  if ( KMime::isInvitation(message.get()) )
-    item.setFlag(Akonadi::MessageFlags::HasInvitation);
-
-  if ( KMime::hasAttachment(message.get()) )
-    item.setFlag(Akonadi::MessageFlags::HasAttachment);
+  Akonadi::MessageFlags::copyMessageFlags(*message, item);
 
   Akonadi::ItemCreateJob *itemCreateJob = new Akonadi::ItemCreateJob(item, targetCollection);
 
@@ -369,5 +355,3 @@ void AirsyncDownloadResource::doSetOnline(bool online)
 //--------------------------------------------------------------------------------
 
 AKONADI_RESOURCE_MAIN( AirsyncDownloadResource )
-
-#include "AirsyncDownloadResource.moc"

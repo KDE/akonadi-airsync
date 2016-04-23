@@ -19,7 +19,7 @@
 #ifndef _SettingsDialog_H_
 #define _SettingsDialog_H_
 
-#include <KDialog>
+#include <QDialog>
 namespace KWallet
 {
   class Wallet;
@@ -33,7 +33,7 @@ class KJob;
 
 //--------------------------------------------------------------------------------
 
-class SettingsDialog : public KDialog
+class SettingsDialog : public QDialog
 {
   Q_OBJECT
 
@@ -43,11 +43,13 @@ class SettingsDialog : public KDialog
 
     QString getPassword() const { return ui.passwordEdit->text(); }
 
+  public slots:
+    virtual void accept();
+
   private slots:
     void targetCollectionReceived(Akonadi::Collection::List collections);
     void localFolderRequestJobFinished(KJob *job);
     void showPasswordChecked(bool checked);
-    virtual void slotButtonClicked(int button);
 
   private:  // methods
     void loadSettings();

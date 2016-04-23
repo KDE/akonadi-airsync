@@ -1,72 +1,95 @@
+cmake_minimum_required(VERSION 2.8.12)
+
 project(airsyncdownload)
 
-# search packages used by KDE
-find_package (KDE4 REQUIRED)
-include(KDE4Defaults)
-include(MacroLibrary)
-include(MacroOptionalAddSubdirectory)
-include(CheckIncludeFiles)
-find_package (KdepimLibs REQUIRED)
+find_package(ECM 5.19 REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} /home/KDE5/lib64/cmake)
 
-find_program(XSLTPROC_EXECUTABLE xsltproc)
-macro_log_feature(XSLTPROC_EXECUTABLE "xsltproc" "The command line XSLT processor from libxslt" "http://xmlsoft.org/XSLT/" FALSE "" "Needed for building Akonadi resources. Recommended.")
+include(KDEInstallDirs)
+include(KDECompilerSettings)
+include(KDECMakeSettings)
+include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
+include(ECMInstallIcons)
 
-if (XSLTPROC_EXECUTABLE)
-  # generates a D-Bus interface description from a KConfigXT file
-  macro( kcfg_generate_dbus_interface _kcfg _name )
+add_definitions(-DTRANSLATION_DOMAIN="airsyncdownload_resource")
+
+set(KF5_VERSION "5.19")
+set(QT_REQUIRED_VERSION "5.5")
+set(AKONADI_VERSION "5.2.0")
+set(KMIME_LIB_VERSION "5.2.0")
+
+# QT5 package
+find_package(Qt5 ${QT_REQUIRED_VERSION} CONFIG REQUIRED Network Widgets Xml DBus)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+find_package(KF5Config ${KF5_VERSION} CONFIG REQUIRED)
+find_package(KF5ConfigWidgets ${KF5_VERSION} CONFIG REQUIRED)
+find_package(KF5WindowSystem ${KF5_VERSION} CONFIG REQUIRED)
+find_package(KF5Wallet ${KF5_VERSION} CONFIG REQUIRED)
+find_package(KF5Mime ${KMIME_LIB_VERSION} CONFIG REQUIRED)
+
+# KdepimLibs package
+find_package(KF5Akonadi ${AKONADI_VERSION} CONFIG REQUIRED)
+find_package(KF5AkonadiMime ${AKONADI_VERSION} CONFIG REQUIRED)
+
+# Xsltproc
+find_program(XSLTPROC_EXECUTABLE xsltproc DOC "Path to the xsltproc executable")
+mark_as_advanced(XSLTPROC_EXECUTABLE)
+
+if(XSLTPROC_EXECUTABLE)
+  set(Xsltproc_FOUND TRUE)
+
+  # We depend on kdepimlibs, make sure it's found
+  if(NOT DEFINED KF5Akonadi_DATA_DIR)
+    find_package(KF5Akonadi REQUIRED)
+  endif()
+
+
+  # Macro to generate a D-Bus interface description from a KConfigXT file
+  macro(kcfg_generate_dbus_interface _kcfg _name)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_name}.xml
       COMMAND ${XSLTPROC_EXECUTABLE} --stringparam interfaceName ${_name}
-              ${KDEPIMLIBS_DATA_DIR}/akonadi-kde/kcfg2dbus.xsl
-              ${_kcfg}
-              > ${CMAKE_CURRENT_BINARY_DIR}/${_name}.xml
-      DEPENDS ${KDEPIMLIBS_DATA_DIR}/akonadi-kde/kcfg2dbus.xsl
-              ${_kcfg}
-    )
-  endmacro( kcfg_generate_dbus_interface )
-endif (XSLTPROC_EXECUTABLE)
-
-if(WIN32)
-    set(LIB_INSTALL_DIR ${LIB_INSTALL_DIR}
-                        RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-                        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-                        ARCHIVE DESTINATION ${LIB_INSTALL_DIR} )
-endif(WIN32)
-
-set(KDE4_ICON_DIR ${KDE4_INSTALL_DIR}/share/icons)
-
-include_directories(
-    ${KDE4_INCLUDES}
-    ${KDEPIMLIBS_INCLUDE_DIRS}
-)
-
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KDE4_ENABLE_EXCEPTIONS}" )
-
-
-########### next target ###############
+      ${KF5Akonadi_DATA_DIR}/kcfg2dbus.xsl
+      ${_kcfg}
+      > ${CMAKE_CURRENT_BINARY_DIR}/${_name}.xml
+      DEPENDS ${KF5Akonadi_DATA_DIR}/kcfg2dbus.xsl
+      ${_kcfg}
+      )
+  endmacro()
+endif()
 
 set(airsyncdownloadresource_SRCS
-  AirsyncDownloadResource.cxx
-  SettingsDialog.cxx
-  Session.cxx
+    AirsyncDownloadResource.cxx
+    SettingsDialog.cxx
+    Session.cxx
 )
 
-install( FILES airsyncdownloadresource.desktop DESTINATION "${CMAKE_INSTALL_PREFIX}/share/akonadi/agents" )
+install(FILES airsyncdownloadresource.desktop DESTINATION "${KDE_INSTALL_DATAROOTDIR}/akonadi/agents")
 
-kde4_add_ui_files(airsyncdownloadresource_SRCS Settings.ui)
-kde4_add_kcfg_files(airsyncdownloadresource_SRCS settings.kcfgc)
+ki18n_wrap_ui(airsyncdownloadresource_SRCS Settings.ui)
+kconfig_add_kcfg_files(airsyncdownloadresource_SRCS settings.kcfgc)
 kcfg_generate_dbus_interface(${CMAKE_CURRENT_SOURCE_DIR}/airsyncdownloadresource.kcfg org.kde.Akonadi.AirsyncDownload.Settings)
-qt4_add_dbus_adaptor(airsyncdownloadresource_SRCS
+qt5_add_dbus_adaptor(airsyncdownloadresource_SRCS
   ${CMAKE_CURRENT_BINARY_DIR}/org.kde.Akonadi.AirsyncDownload.Settings.xml settings.h Settings
 )
 
-kde4_add_executable(akonadi_airsyncdownload_resource RUN_UNINSTALLED ${airsyncdownloadresource_SRCS})
+#add_executable(akonadi_airsyncdownload_resource RUN_UNINSTALLED ${airsyncdownloadresource_SRCS})
+add_executable(akonadi_airsyncdownload_resource ${airsyncdownloadresource_SRCS})
 
 target_link_libraries(akonadi_airsyncdownload_resource
-    ${KDE4_AKONADI_LIBS}
-    ${KDEPIMLIBS_AKONADI_KMIME_LIBS}
-    ${KDEPIMLIBS_KMIME_LIBS}
-    ${QT_QTCORE_LIBRARY} ${QT_QTNETWORK_LIBRARY} ${QT_QTXML_LIBRARY}
-    ${QT_QTDBUS_LIBRARY} ${KDE4_KDECORE_LIBS} wbxml2)
+  KF5::AkonadiCore
+  KF5::AkonadiMime
+  KF5::Mime
+  KF5::AkonadiAgentBase
+  KF5::AkonadiWidgets
+  KF5::WindowSystem
+  KF5::Wallet
+  KF5::I18n
+  Qt5::Network
+  Qt5::Xml
+  Qt5::DBus
+  wbxml2
+)
 
-install(TARGETS akonadi_airsyncdownload_resource ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS akonadi_airsyncdownload_resource ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

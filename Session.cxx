@@ -26,28 +26,16 @@
 #include <QDomDocument>
 #include <QDateTime>
 
-#include <KDebug>
+#include <QDebug>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(airSync, "airSync")
+Q_LOGGING_CATEGORY(airSync2, "airSync2")
 
 //--------------------------------------------------------------------------------
 
-int Session::debugArea()
-{
-  static int num = KDebug::registerArea("airSync"); 
-  return num;
-}
-
-//--------------------------------------------------------------------------------
-
-int Session::debugArea2()
-{
-  static int num = KDebug::registerArea("airSync2"); 
-  return num;
-}
-
-//--------------------------------------------------------------------------------
-
-#define PRINT_DEBUG(x) { kDebug(debugArea()) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
-#define PRINT_DEBUG2(x) { kDebug(debugArea2()) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
+#define PRINT_DEBUG(x) { qCDebug(airSync) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
+#define PRINT_DEBUG2(x) { qCDebug(airSync2) << QDateTime::currentDateTime().toString(Qt::ISODate) << x; }
 
 //--------------------------------------------------------------------------------
 
@@ -107,7 +95,7 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
   if ( !dataToWbXml(xmlHeader + data, wbxml) )
     return QByteArray();
 
-  if ( !KDebug::hasNullOutputQtDebugMsg(debugArea2()) )
+  if ( airSync2().isDebugEnabled() )
   {
     QList<QByteArray> rawHeaders = req.rawHeaderList();
     for (int i = 0; i < rawHeaders.count(); i++)
@@ -140,7 +128,7 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
 
   QByteArray result = reply->readAll();
 
-  if ( !KDebug::hasNullOutputQtDebugMsg(debugArea2()) )
+  if ( airSync2().isDebugEnabled() )
   {
     QList<QByteArray> rawHeaders = reply->rawHeaderList();
     for (int i = 0; i < rawHeaders.count(); i++)
@@ -295,14 +283,14 @@ int Session::init()
   QDomDocument doc;
   if ( !doc.setContent(data) )
   {
-    kWarning() << "ERROR: could not parse XML data";
+    qWarning() << "ERROR: could not parse XML data";
     return -1;
   }
 
   QDomNodeList list = doc.elementsByTagName("PolicyKey");
   if ( list.isEmpty() )
   {
-    kWarning() << "ERROR: PolicyKey not found";
+    qWarning() << "ERROR: PolicyKey not found";
     return -1;
   }
 
@@ -327,14 +315,14 @@ int Session::init()
   // set the final session policyKey
   if  ( !doc.setContent(data) )
   {
-    kWarning() << "ERROR: could not parse XML data";
+    qWarning() << "ERROR: could not parse XML data";
     return -1;
   }
 
   list = doc.elementsByTagName("PolicyKey");
   if ( list.isEmpty() )
   {
-    kWarning() << "ERROR: PolicyKey not found";
+    qWarning() << "ERROR: PolicyKey not found";
     return -1;
   }
 
@@ -351,7 +339,7 @@ int Session::init()
 
   if ( !doc.setContent(data) )
   {
-    kWarning() << "ERROR: could not parse XML data";
+    qWarning() << "ERROR: could not parse XML data";
     return -1;
   }
 
@@ -564,7 +552,7 @@ int Session::deleteMails(const QList<QByteArray> &mailIds)
   QDomDocument doc;
   if ( !doc.setContent(data) )
   {
-    kWarning() << "ERROR: could not parse XML data";
+    qWarning() << "ERROR: could not parse XML data";
     return -1;
   }
 

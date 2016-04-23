@@ -20,15 +20,17 @@
 #include <AirsyncDownloadResource.hxx>
 #include "settings.h"
 
-#include <Akonadi/Collection>
-#include <Akonadi/CollectionFetchJob>
-#include <akonadi/kmime/specialmailcollections.h>
-#include <akonadi/kmime/specialmailcollectionsrequestjob.h>
-#include <akonadi/resourcesettings.h>
+#include <AkonadiCore/Collection>
+#include <AkonadiCore/CollectionFetchJob>
+#include <AkonadiAgentBase/ResourceSettings>
+#include <Akonadi/KMime/SpecialMailCollections>
+#include <Akonadi/KMime/SpecialMailCollectionsRequestJob>
 
 #include <KWindowSystem>
 #include <KUser>
 #include <kwallet.h>
+
+#include <QDialogButtonBox>
 
 using namespace Akonadi;
 using namespace KWallet;
@@ -38,23 +40,22 @@ using namespace KWallet;
 SettingsDialog::SettingsDialog(AirsyncDownloadResource *res, WId parentWindow)
   : resource(res), wallet(0)
 {
-  ui.setupUi(mainWidget());
+  ui.setupUi(this);
+  connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
+  connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
   KWindowSystem::setMainWindow(this, parentWindow);
-  setWindowIcon(KIcon("network-server"));
+  setWindowIcon(QIcon::fromTheme(QLatin1String("network-server")));
   setWindowTitle(i18n("AirSyncDownload Account Settings"));
-  setButtons(Ok|Cancel);
 
   // only letters, digits, '-', '.', ':' (IPv6) and '_' (for Windows
   // compatibility) are allowed
   validator.setRegExp(QRegExp("[A-Za-z0-9-_:.]*"));
   ui.serverEdit->setValidator(&validator);
 
-  ui.intervalSpin->setSuffix(ki18np(" minute", " minutes"));
-  ui.intervalSpin->setRange(1, 10000, 1);
+  ui.intervalSpin->setSuffix(ki18np(" minute", " minutes").toString());
 
   ui.folderRequester->setMimeTypeFilter(QStringList() << QLatin1String("message/rfc822"));
-  ui.folderRequester->setFrameStyle(QFrame::NoFrame);
   ui.folderRequester->setAccessRightsFilter(Akonadi::Collection::CanCreateItem);
   ui.folderRequester->changeCollectionDialogOptions(Akonadi::CollectionDialog::AllowToCreateNewChildCollection);
 
@@ -121,7 +122,7 @@ void SettingsDialog::loadSettings()
   }
   else
   {
-    ui.passwordEdit->setClickMessage(i18n("Wallet disabled in system settings"));
+    ui.passwordEdit->setPlaceholderText(i18n("Wallet disabled in system settings"));
   }
 
   connect(ui.showPasswordCheck, SIGNAL(toggled(bool)), this, SLOT(showPasswordChecked(bool)));
@@ -157,23 +158,10 @@ void SettingsDialog::showPasswordChecked(bool checked)
 
 //--------------------------------------------------------------------------------
 
-void SettingsDialog::slotButtonClicked(int button)
+void SettingsDialog::accept()
 {
-  switch( button )
-  {
-    case Ok:
-    {
-      saveSettings();
-      accept();
-      break;
-    }
-
-    case Cancel:
-    {
-      reject();
-      break;
-    }
-  }
+  saveSettings();
+  QDialog::accept();
 }
 
 //--------------------------------------------------------------------------------
@@ -191,7 +179,7 @@ void SettingsDialog::saveSettings()
   Settings::self()->setIntervalCheckInterval(ui.intervalSpin->value());
 
   Settings::self()->setTargetCollection(ui.folderRequester->collection().id());
-  Settings::self()->writeConfig();
+  Settings::self()->save();
 
   if ( wallet )
   {

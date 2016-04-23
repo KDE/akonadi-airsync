@@ -50,7 +50,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="KLineEdit" name="nameEdit">
+       <widget class="QLineEdit" name="nameEdit">
         <property name="toolTip">
          <string>Name displayed in the list of accounts</string>
         </property>
@@ -62,7 +62,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>Exchange Server</string>
+         <string>E&amp;xchange Server</string>
         </property>
         <property name="buddy">
          <cstring>serverEdit</cstring>
@@ -70,7 +70,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="KLineEdit" name="serverEdit">
+       <widget class="QLineEdit" name="serverEdit">
         <property name="toolTip">
          <string>Address of the mail server</string>
         </property>
@@ -90,7 +90,7 @@
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="KLineEdit" name="domainEdit">
+       <widget class="QLineEdit" name="domainEdit">
         <property name="toolTip">
          <string>The Windows domain name</string>
         </property>
@@ -102,7 +102,7 @@
       <item row="5" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Username:</string>
+         <string>&amp;Username:</string>
         </property>
         <property name="buddy">
          <cstring>userNameEdit</cstring>
@@ -110,7 +110,7 @@
        </widget>
       </item>
       <item row="5" column="1">
-       <widget class="KLineEdit" name="userNameEdit">
+       <widget class="QLineEdit" name="userNameEdit">
         <property name="toolTip">
          <string>The username that identifies you against the mail server</string>
         </property>
@@ -130,7 +130,7 @@
        </widget>
       </item>
       <item row="6" column="1">
-       <widget class="KLineEdit" name="passwordEdit">
+       <widget class="QLineEdit" name="passwordEdit">
         <property name="toolTip">
          <string>Password for access to the mail server</string>
         </property>
@@ -191,12 +191,12 @@
          </widget>
         </item>
         <item>
-         <widget class="KIntNumInput" name="intervalSpin">
+         <widget class="QSpinBox" name="intervalSpin">
           <property name="enabled">
            <bool>false</bool>
           </property>
-          <property name="value">
-           <number>5</number>
+          <property name="suffix">
+           <string/>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -204,8 +204,8 @@
           <property name="maximum">
            <number>10000000</number>
           </property>
-          <property name="suffix">
-           <string/>
+          <property name="value">
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -221,38 +221,27 @@
          </widget>
         </item>
         <item>
-         <widget class="Akonadi::CollectionRequester" name="folderRequester">
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-         </widget>
+         <widget class="Akonadi::CollectionRequester" name="folderRequester" native="true"/>
         </item>
        </layout>
       </item>
      </layout>
     </widget>
    </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>KIntNumInput</class>
-   <extends>QWidget</extends>
-   <header>knuminput.h</header>
-  </customwidget>
-  <customwidget>
    <class>Akonadi::CollectionRequester</class>
-   <extends>QFrame</extends>
-   <header>Akonadi/CollectionRequester</header>
+   <extends>QWidget</extends>
+   <header>AkonadiWidgets/CollectionRequester</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

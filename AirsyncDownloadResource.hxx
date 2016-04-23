@@ -19,8 +19,8 @@
 #ifndef AIRSYNCDOWNLOADRESOURCE_H
 #define AIRSYNCDOWNLOADRESOURCE_H
 
-#include <akonadi/resourcebase.h>
-#include <Akonadi/ItemCreateJob>
+#include <AkonadiAgentBase/ResourceBase>
+#include <AkonadiCore/ItemCreateJob>
 #include <QTimer>
 #include <KMime/Message>
 class Session;
