@@ -6,9 +6,8 @@ find_package(ECM 5.19 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 include(KDEInstallDirs)
-include(KDECompilerSettings)
+include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDECMakeSettings)
-include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
 
 add_definitions(-DTRANSLATION_DOMAIN="airsyncdownload_resource")
 
@@ -25,6 +24,7 @@ find_package(KF5Config ${KF5_VERSION} CONFIG REQUIRED)
 find_package(KF5ConfigWidgets ${KF5_VERSION} CONFIG REQUIRED)
 find_package(KF5WindowSystem ${KF5_VERSION} CONFIG REQUIRED)
 find_package(KF5Wallet ${KF5_VERSION} CONFIG REQUIRED)
+find_package(KF5I18n ${KF5_VERSION} CONFIG REQUIRED)
 find_package(KF5Mime ${KMIME_LIB_VERSION} CONFIG REQUIRED)
 
 # KdepimLibs package

@@ -25,6 +25,7 @@
 #include <QSslError>
 #include <QDomDocument>
 #include <QDateTime>
+#include <QUrlQuery>
 
 #include <QDebug>
 #include <QLoggingCategory>
@@ -52,9 +53,11 @@ Session::Session(const QString &server, const QString &domain,
 
   serverUrl.setPath(QLatin1String("/Microsoft-Server-ActiveSync"));
   // set query parts which stay the same
-  serverUrl.addQueryItem("User", (domain + '\\' + username).toUtf8().toPercentEncoding());
-  serverUrl.addQueryItem("DeviceId", uniqueDeviceId);
-  serverUrl.addQueryItem("DeviceType", "SP");
+  QUrlQuery query;
+  query.addQueryItem("User", (domain + '\\' + username).toUtf8().toPercentEncoding());
+  query.addQueryItem("DeviceId", uniqueDeviceId);
+  query.addQueryItem("DeviceType", "SP");
+  serverUrl.setQuery(query);
 
   loginBase64 = (domain + '\\' + username + ':' + password).toUtf8().toBase64();
 }
@@ -66,7 +69,9 @@ QByteArray Session::sendCommand(const QByteArray &cmd, const QByteArray &data)
   QNetworkRequest req;
 
   QUrl url = serverUrl;
-  url.addQueryItem(QLatin1String("Cmd"), QString::fromUtf8(cmd));
+  QUrlQuery query(url.query());
+  query.addQueryItem(QLatin1String("Cmd"), QString::fromUtf8(cmd));
+  url.setQuery(query);
   req.setUrl(url);
 
   return post(req, data);
