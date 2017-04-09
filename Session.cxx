@@ -123,6 +123,14 @@ QByteArray Session::post(QNetworkRequest req, const QByteArray &data)
 
   if ( reply->isRunning() )  // event loop was stopped prematurely
   {
+    if ( reply->error() != QNetworkReply::NoError )
+      PRINT_DEBUG("error:" << reply->errorString());
+
+    // Qt-5.6.1, openSuse 42.2, 9.3.2017
+    // when switching from VPN-active to VPN-inactive, QNAM goes "Network access is disabled"
+    // and never back automatically. Set it back to accessible
+    nam->setNetworkAccessible(QNetworkAccessManager::Accessible);
+
     reply->abort();
     PRINT_DEBUG("aborted");
     delete reply;
