@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------------
 
 AirsyncDownloadResource::AirsyncDownloadResource(const QString &id)
-  : ResourceBase(id), session(0), downloadFinished(false)
+  : ResourceBase(id), session(0), mailCheckFromTimer(false), downloadFinished(false)
 {
   setNeedsNetwork(true);
 
@@ -85,7 +85,7 @@ void AirsyncDownloadResource::retrieveCollections()
   }
 
   if ( status() != Running )
-    startMailCheck();
+    startMailCheck(false);
   else
   {
     cancelTask(i18n("Mail check already in progress, unable to start a second check."));
@@ -229,7 +229,7 @@ void AirsyncDownloadResource::authRequired()
 
 //--------------------------------------------------------------------------------
 
-void AirsyncDownloadResource::startMailCheck()
+void AirsyncDownloadResource::startMailCheck(bool fromTimer)
 {
   if ( !isOnline() ||
        (status() == Running) ||        // previous check still in progress
@@ -241,6 +241,7 @@ void AirsyncDownloadResource::startMailCheck()
   mailsToDelete.clear();
   pendingCreateJobs.clear();
   downloadFinished = false;
+  mailCheckFromTimer = fromTimer;
 
   int ret = session->fetchMails();
   if ( ret < 0 )
@@ -285,7 +286,8 @@ void AirsyncDownloadResource::finish()
     }
   }
 
-  collectionsRetrieved(Akonadi::Collection::List());
+  if ( !mailCheckFromTimer )
+    collectionsRetrieved(Akonadi::Collection::List());
 
   int num = mailsToDelete.count();
 

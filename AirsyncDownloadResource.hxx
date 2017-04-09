@@ -48,7 +48,7 @@ class AirsyncDownloadResource : public Akonadi::ResourceBase,
 
   private Q_SLOTS:
     void loadConfiguration();
-    void startMailCheck();
+    void startMailCheck(bool fromTimer = true);
     void newMessage(KMime::Message::Ptr message, const QByteArray &mailId);
     void itemCreateJobResult(KJob *job);
     void errorMessageChanged(const QString &msg);
@@ -65,6 +65,7 @@ class AirsyncDownloadResource : public Akonadi::ResourceBase,
     Session *session;
     QMap<KJob *, QByteArray> pendingCreateJobs;
     QList<QByteArray> mailsToDelete;
+    bool mailCheckFromTimer;
     bool downloadFinished;
     QString lastErrorMessage;
 };
