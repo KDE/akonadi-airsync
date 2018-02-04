@@ -1,4 +1,4 @@
-/* Copyright 2015, Martin Koller, kollix@aon.at
+/* Copyright 2015, 2018, Martin Koller, kollix@aon.at
 
   This file is part of airsyncDownload.
 
@@ -18,7 +18,7 @@
 
 #include <Session.hxx>
 
-#include <wbxml.h>
+#include <wbxml/wbxml.h>
 #include <iostream>
 
 #include <QUuid>
@@ -201,38 +201,38 @@ void Session::sslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 
 bool Session::dataToWbXml(const QByteArray &data, QByteArray &result)
 {
-  WBXMLTree *tree = 0;
+  WBXMLConvXML2WBXML *conv = 0;
 
-  WBXMLError error =
-    wbxml_tree_from_xml(const_cast<WB_UTINY*>(reinterpret_cast<const WB_UTINY*>(data.constData())),
-                        data.length(), &tree);
+  WBXMLError error = wbxml_conv_xml2wbxml_create(&conv);
 
   if ( error != WBXML_OK )
   {
-    PRINT_DEBUG("-error- wbxml_tree_from_xml:" << QByteArray::number(error) <<
+    PRINT_DEBUG("-error- wbxml_conv_xml2wbxml_create:" << QByteArray::number(error) <<
                 QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
     return false;
   }
+
+  wbxml_conv_xml2wbxml_set_version(conv, WBXML_VERSION_13);
+  wbxml_conv_xml2wbxml_disable_public_id(conv);  // important!
 
   WB_UTINY *wbxml = 0;
   WB_ULONG wbxml_len = 0;
-  WBXMLGenWBXMLParams params;
-  params.wbxml_version = WBXML_VERSION_13;
-  params.keep_ignorable_ws = 0;
-  params.use_strtbl = 1;
-  params.produce_anonymous = 1;  // important!
-  error = wbxml_tree_to_wbxml(tree, &wbxml, &wbxml_len, &params);
 
-  wbxml_tree_destroy(tree);
+  error = wbxml_conv_xml2wbxml_run(conv,
+                                   const_cast<WB_UTINY *>(reinterpret_cast<const WB_UTINY *>(data.constData())),
+                                   static_cast<WB_ULONG>(data.length()),
+                                   &wbxml, &wbxml_len);
+
+  wbxml_conv_xml2wbxml_destroy(conv);
 
   if ( error != WBXML_OK )
   {
-    PRINT_DEBUG("-error- wbxml_tree_to_wbxml:" << QByteArray::number(error) <<
+    PRINT_DEBUG("-error- wbxml_conv_xml2wbxml_run:" << QByteArray::number(error) <<
                 QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
     return false;
   }
 
-  result = QByteArray(reinterpret_cast<const char*>(wbxml), wbxml_len);
+  result = QByteArray(reinterpret_cast<const char *>(wbxml), wbxml_len);
   free(wbxml);
 
   return true;
@@ -317,7 +317,7 @@ int Session::init()
             "<Policy>"
               "<PolicyType>MS-EAS-Provisioning-WBXML</PolicyType>\n"
               "<PolicyKey>" + QByteArray::number(policyKey) + "</PolicyKey>\n"
-              "<Status xmlns=\"http://synce.org/formats/airsync_wm5/provision\">1</Status>\n"  // xmlns wichtig !!!!!
+              "<Status>1</Status>\n"
             "</Policy>"
           "</Policies>"
         "</Provision>";
@@ -344,7 +344,7 @@ int Session::init()
 
   // get list of available folders
   data = "<FolderSync xmlns=\"FolderHierarchy:\">\n"
-    "<SyncKey xmlns=\"http://synce.org/formats/airsync_wm5/folderhierarchy\">0</SyncKey>\n"
+    "<SyncKey>0</SyncKey>\n"
     "</FolderSync>\n";
   data = sendCommand("FolderSync", data);
   if ( aborted ) return 0;
@@ -479,18 +479,17 @@ int Session::fetchMails()
     QByteArray mailId = node.firstChildElement("ServerId").text().toUtf8();
 
     data = "<ItemOperations"
-                " xmlns:airsync='AirSync'"
-                " xmlns:airsyncbase='http://synce.org/formats/airsync_wm5/airsyncbase'"
-                " xmlns='ItemOperations'>"
-             "<Fetch xmlns='http://synce.org/formats/airsync_wm5/itemoperations'>"
+                " xmlns:airsync='AirSync:'"
+                " xmlns='ItemOperations:'>"
+             "<Fetch>"
                "<Store>Mailbox</Store>"
                "<airsync:CollectionId>" + collectionId + "</airsync:CollectionId>"
                "<airsync:ServerId>" + mailId + "</airsync:ServerId>"
                "<Options>"
                  "<airsync:MIMESupport>2</airsync:MIMESupport>"
-                 "<airsyncbase:BodyPreference>"
-                   "<airsyncbase:Type>4</airsyncbase:Type>"
-                 "</airsyncbase:BodyPreference>"
+                 "<BodyPreference xmlns='AirSyncBase:'>"
+                   "<Type>4</Type>"
+                 "</BodyPreference>"
                "</Options>"
              "</Fetch>"
            "</ItemOperations>";
