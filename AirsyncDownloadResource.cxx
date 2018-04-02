@@ -265,7 +265,8 @@ void AirsyncDownloadResource::startMailCheck(bool fromTimer)
 
   downloadFinished = true;
 
-  if ( pendingCreateJobs.isEmpty() )  // no mail or all mails created
+  if ( (status() == Running) &&       // might have been already aborted
+       pendingCreateJobs.isEmpty() )  // no mail or all mails created
     finish();
 }
 
