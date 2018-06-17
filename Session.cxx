@@ -242,22 +242,31 @@ bool Session::dataToWbXml(const QByteArray &data, QByteArray &result)
 
 bool Session::dataFromWbXml(const QByteArray &data, QByteArray &result)
 {
-  WBXMLGenXMLParams params;
-  params.gen_type = WBXML_GEN_XML_INDENT;
-  params.lang = WBXML_LANG_AIRSYNC;
-  params.indent = 2;
-  params.keep_ignorable_ws = 0;
+  WBXMLError error;
+  WBXMLConvWBXML2XML *conv = 0;
+  error = wbxml_conv_wbxml2xml_create(&conv);
+  if ( error != WBXML_OK )
+  {
+    PRINT_DEBUG("-error- wbxml_conv_wbxml2xml:" + QByteArray::number(error) +
+                QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
+    return false;
+  }
+  wbxml_conv_wbxml2xml_set_gen_type(conv, WBXML_GEN_XML_INDENT);
+  wbxml_conv_wbxml2xml_set_language(conv, WBXML_LANG_AIRSYNC);
+  wbxml_conv_wbxml2xml_set_indent(conv, 2);
 
   WB_UTINY *xml = 0;
   WB_ULONG len = 0;
 
-  WBXMLError error =
-    wbxml_conv_wbxml2xml_withlen(const_cast<WB_UTINY*>(reinterpret_cast<const WB_UTINY*>(data.constData())),
-                                 data.length(), &xml, &len, &params);
+  error = wbxml_conv_wbxml2xml_run(conv,
+                                   const_cast<WB_UTINY *>(reinterpret_cast<const WB_UTINY *>(data.constData())),
+                                   data.length(), &xml, &len);
+
+  wbxml_conv_wbxml2xml_destroy(conv);
 
   if ( error != WBXML_OK )
   {
-    PRINT_DEBUG("-error- wbxml_conv_wbxml2xml_withlen:" << QByteArray::number(error) <<
+    PRINT_DEBUG("-error- wbxml_conv_wbxml2xml_run:" << QByteArray::number(error) <<
                 QByteArray(reinterpret_cast<const char*>(wbxml_errors_string(error))));
     PRINT_DEBUG("input was:" << data.toPercentEncoding());
     return false;
